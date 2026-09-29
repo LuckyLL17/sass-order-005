@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  LayoutGrid, 
-  Search, 
-  CreditCard, 
-  Users, 
-  User, 
-  Menu, 
-  X, 
+import {
+  LayoutGrid,
+  Search,
+  CreditCard,
+  Users,
+  User,
+  Menu,
+  X,
   LogOut,
   ChevronDown,
-  Zap
+  Zap,
+  GitCompareArrows
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
@@ -27,8 +28,9 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { user, isAuthenticated, logout } = useStore();
+  const { user, isAuthenticated, logout, compareIds } = useStore();
   const navigate = useNavigate();
+  const compareCount = compareIds.length;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,6 +97,19 @@ export default function Navbar() {
               >
                 <Search className="w-4 h-4" />
                 <span className="text-sm">搜索工具</span>
+              </Link>
+
+              <Link
+                to="/compare"
+                title="工具对比"
+                className="relative hidden sm:flex items-center justify-center w-10 h-10 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <GitCompareArrows className="w-5 h-5" />
+                {compareCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-dark-950">
+                    {compareCount}
+                  </span>
+                )}
               </Link>
 
               {isAuthenticated && user ? (
@@ -210,6 +225,28 @@ export default function Navbar() {
                   {item.label}
                 </NavLink>
               ))}
+              <NavLink
+                to="/compare"
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  cn(
+                    'px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-3',
+                    isActive
+                      ? 'bg-primary-500/20 text-primary-400'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  )
+                }
+              >
+                <span className="relative">
+                  <GitCompareArrows className="w-5 h-5" />
+                  {compareCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white text-[9px] font-bold flex items-center justify-center">
+                      {compareCount}
+                    </span>
+                  )}
+                </span>
+                工具对比{compareCount > 0 ? `（${compareCount}）` : ''}
+              </NavLink>
             </nav>
 
             {isAuthenticated && user && (

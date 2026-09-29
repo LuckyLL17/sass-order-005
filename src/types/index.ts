@@ -1,5 +1,12 @@
 export type Category = 'design' | 'development' | 'marketing' | 'collaboration';
 export type PlanPeriod = 'monthly' | 'yearly';
+export type ToastType = 'info' | 'success' | 'warning' | 'error';
+
+export interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+}
 export type SubscriptionStatus = 'active' | 'expired' | 'cancelled';
 export type BillStatus = 'paid' | 'pending' | 'failed';
 export type TeamRole = 'admin' | 'member';

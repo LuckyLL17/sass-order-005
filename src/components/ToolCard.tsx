@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Users, ArrowRight } from 'lucide-react';
+import { Star, Users, ArrowRight, GitCompareArrows, Check } from 'lucide-react';
 import type { Tool } from '@/types';
 import { categories } from '@/mock/tools';
+import { useStore, MAX_COMPARE_TOOLS } from '@/store/useStore';
+import { cn } from '@/lib/utils';
 
 interface ToolCardProps {
   tool: Tool;
@@ -11,6 +13,8 @@ interface ToolCardProps {
 
 export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
   const categoryInfo = categories.find(c => c.id === tool.category);
+  const { compareIds, toggleCompare } = useStore();
+  const isInCompare = compareIds.includes(tool.id);
 
   return (
     <motion.div
@@ -19,6 +23,7 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       whileHover={{ y: -4 }}
+      className="h-full relative"
     >
       <Link
         to={`/tool/${tool.id}`}
@@ -32,7 +37,7 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
               className="w-full h-full object-cover rounded-xl"
             />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 pr-16">
             <h3 className="font-semibold text-white text-lg mb-1 group-hover:text-primary-400 transition-colors">
               {tool.name}
             </h3>
@@ -88,12 +93,38 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
                 <span className="text-gray-500 text-sm">/月</span>
               </div>
             </div>
-            <div className="px-3 py-1.5 rounded-lg bg-primary-500/10 text-primary-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-              立即订阅
+            <div className={cn(
+              'px-3 py-1.5 rounded-lg text-sm font-medium transition-opacity',
+              isInCompare
+                ? 'bg-primary-500/20 text-primary-300 opacity-100'
+                : 'bg-primary-500/10 text-primary-400 opacity-0 group-hover:opacity-100'
+            )}>
+              {isInCompare ? '对比中' : '立即订阅'}
             </div>
           </div>
         </div>
       </Link>
+
+      <button
+        type="button"
+        onClick={() => toggleCompare(tool.id)}
+        aria-pressed={isInCompare}
+        title={isInCompare ? '从对比中移除' : '加入对比'}
+        className={cn(
+          'absolute top-4 right-4 z-10 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium',
+          'backdrop-blur-md border transition-all active:scale-95',
+          isInCompare
+            ? 'bg-primary-500/80 border-primary-400 text-white hover:bg-primary-600/80'
+            : 'bg-dark-900/70 border-gray-600/60 text-gray-300 hover:border-primary-500 hover:text-primary-400 hover:bg-primary-500/10'
+        )}
+      >
+        {isInCompare ? (
+          <Check className="w-3.5 h-3.5" />
+        ) : (
+          <GitCompareArrows className="w-3.5 h-3.5" />
+        )}
+        {isInCompare ? `已加入 ${compareIds.length}/${MAX_COMPARE_TOOLS}` : '加入对比'}
+      </button>
     </motion.div>
   );
 }

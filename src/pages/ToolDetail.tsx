@@ -1,29 +1,31 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowLeft, 
-  Star, 
-  Users, 
-  Check, 
-  X, 
-  ChevronLeft, 
+import {
+  ArrowLeft,
+  Star,
+  Users,
+  Check,
+  X,
+  ChevronLeft,
   ChevronRight,
   Shield,
   Zap,
   Clock,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  GitCompareArrows
 } from 'lucide-react';
 import { tools, categories } from '@/mock/tools';
-import { useStore } from '@/store/useStore';
+import { useStore, MAX_COMPARE_TOOLS } from '@/store/useStore';
 import ToolCard from '@/components/ToolCard';
 import type { Plan, PlanPeriod } from '@/types';
+import { cn } from '@/lib/utils';
 
 export default function ToolDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addSubscription } = useStore();
+  const { addSubscription, compareIds, toggleCompare } = useStore();
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [currentScreenshot, setCurrentScreenshot] = useState(0);
@@ -46,6 +48,7 @@ export default function ToolDetail() {
 
   const categoryInfo = categories.find(c => c.id === tool.category);
   const relatedTools = tools.filter(t => t.category === tool.category && t.id !== tool.id).slice(0, 3);
+  const isInCompare = compareIds.includes(tool.id);
 
   const handleSubscribe = () => {
     if (!selectedPlan) return;
@@ -319,6 +322,29 @@ export default function ToolDetail() {
                 }`}
               >
                 {selectedPlan ? `订阅 ${selectedPlan.name} 方案` : '请选择订阅方案'}
+              </button>
+
+              <button
+                onClick={() => toggleCompare(tool.id)}
+                aria-pressed={isInCompare}
+                className={cn(
+                  'w-full mt-3 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 border',
+                  isInCompare
+                    ? 'border-primary-500 bg-primary-500/15 text-primary-300 hover:bg-primary-500/25'
+                    : 'border-gray-600 text-gray-300 hover:border-primary-500 hover:text-primary-400 hover:bg-primary-500/10'
+                )}
+              >
+                {isInCompare ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    已加入对比（{compareIds.length}/{MAX_COMPARE_TOOLS}）
+                  </>
+                ) : (
+                  <>
+                    <GitCompareArrows className="w-4 h-4" />
+                    加入对比
+                  </>
+                )}
               </button>
 
               <p className="text-center text-sm text-gray-500 mt-4">

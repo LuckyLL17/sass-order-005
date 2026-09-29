@@ -1,7 +1,9 @@
 import { create } from 'zustand';
-import type { User, UserSubscription, Tool, Category, SortOption, SubscriptionFilter, UsersRange } from '@/types';
+import type { User, UserSubscription, Tool, Category, SortOption, SubscriptionFilter, UsersRange, Toast, ToastType } from '@/types';
 import { userSubscriptions } from '@/mock/subscriptions';
 import { tools } from '@/mock/tools';
+
+export const MAX_COMPARE_TOOLS = 4;
 
 interface NotificationSettings {
   emailNotifications: boolean;
@@ -28,7 +30,9 @@ interface Store {
   isAuthenticated: boolean;
   notificationSettings: NotificationSettings;
   userPassword: string;
-  
+  compareIds: string[];
+  toasts: Toast[];
+
   setUser: (user: User | null) => void;
   setSelectedCategory: (category: Category | 'all') => void;
   setSearchQuery: (query: string) => void;
@@ -54,6 +58,12 @@ interface Store {
   clearAllFilters: () => void;
   getAllTags: () => string[];
   getPriceRange: () => { min: number; max: number };
+  addToCompare: (toolId: string) => boolean;
+  removeFromCompare: (toolId: string) => void;
+  clearCompare: () => void;
+  toggleCompare: (toolId: string) => void;
+  showToast: (message: string, type?: ToastType) => void;
+  dismissToast: (id: string) => void;
 }
 
 const defaultNotificationSettings: NotificationSettings = {
@@ -81,6 +91,8 @@ export const useStore = create<Store>((set, get) => ({
   isAuthenticated: false,
   notificationSettings: defaultNotificationSettings,
   userPassword: '',
+  compareIds: [],
+  toasts: [],
 
   setUser: (user) => set({ user }),
   
@@ -335,4 +347,49 @@ export const useStore = create<Store>((set, get) => ({
       max: Math.max(...prices),
     };
   },
+
+  addToCompare: (toolId) => {
+    const { compareIds, showToast } = get();
+    if (compareIds.includes(toolId)) {
+      showToast('该工具已在对比列表中，无需重复添加', 'warning');
+      return false;
+    }
+    if (compareIds.length >= MAX_COMPARE_TOOLS) {
+      showToast(`最多只能对比 ${MAX_COMPARE_TOOLS} 个工具，请先移除部分工具`, 'warning');
+      return false;
+    }
+    set({ compareIds: [...compareIds, toolId] });
+    const count = compareIds.length + 1;
+    showToast(`已加入对比（${count}/${MAX_COMPARE_TOOLS}）`, 'success');
+    return true;
+  },
+
+  removeFromCompare: (toolId) =>
+    set((state) => ({
+      compareIds: state.compareIds.filter(id => id !== toolId),
+    })),
+
+  clearCompare: () => set({ compareIds: [] }),
+
+  toggleCompare: (toolId) => {
+    const { compareIds, addToCompare, removeFromCompare } = get();
+    if (compareIds.includes(toolId)) {
+      removeFromCompare(toolId);
+    } else {
+      addToCompare(toolId);
+    }
+  },
+
+  showToast: (message, type = 'info') => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    set((state) => ({ toasts: [...state.toasts, { id, message, type }] }));
+    setTimeout(() => {
+      get().dismissToast(id);
+    }, 2400);
+  },
+
+  dismissToast: (id) =>
+    set((state) => ({
+      toasts: state.toasts.filter(toast => toast.id !== id),
+    })),
 }));
