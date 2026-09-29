@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  LayoutGrid, 
-  Search, 
-  CreditCard, 
-  Users, 
-  User, 
-  Menu, 
-  X, 
+import {
+  LayoutGrid,
+  Search,
+  CreditCard,
+  Users,
+  User,
+  Menu,
+  X,
   LogOut,
   ChevronDown,
-  Zap
+  Zap,
+  GitCompareArrows
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { to: '/', label: '首页', icon: Zap },
   { to: '/market', label: '工具市场', icon: LayoutGrid },
+  { to: '/compare', label: '工具对比', icon: GitCompareArrows, showBadge: true },
   { to: '/subscriptions', label: '订阅管理', icon: CreditCard },
   { to: '/team', label: '团队协作', icon: Users },
 ];
@@ -28,6 +30,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useStore();
+  const compareCount = useStore((state) => state.compareToolIds.length);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -75,7 +78,7 @@ export default function Navbar() {
                   to={item.to}
                   className={({ isActive }) =>
                     cn(
-                      'px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2',
+                      'px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 relative',
                       isActive
                         ? 'bg-primary-500/20 text-primary-400'
                         : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -84,6 +87,11 @@ export default function Navbar() {
                 >
                   <item.icon className="w-4 h-4" />
                   {item.label}
+                  {item.showBadge && compareCount > 0 && (
+                    <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary-500 text-white text-[11px] font-bold leading-none">
+                      {compareCount}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </div>
@@ -207,7 +215,12 @@ export default function Navbar() {
                   }
                 >
                   <item.icon className="w-5 h-5" />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {item.showBadge && compareCount > 0 && (
+                    <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary-500 text-white text-xs font-bold leading-none">
+                      {compareCount}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </nav>

@@ -2,9 +2,11 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 import { AnimatePresence, motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Toast from "@/components/Toast";
 import Home from "@/pages/Home";
 import Market from "@/pages/Market";
 import ToolDetail from "@/pages/ToolDetail";
+import Compare from "@/pages/Compare";
 import Subscriptions from "@/pages/Subscriptions";
 import Team from "@/pages/Team";
 import Profile from "@/pages/Profile";
@@ -57,8 +59,8 @@ function AnimatedRoutes() {
             </motion.div>
           } 
         />
-        <Route 
-          path="/tool/:id" 
+        <Route
+          path="/tool/:id"
           element={
             <motion.div
               variants={pageVariants}
@@ -69,7 +71,21 @@ function AnimatedRoutes() {
             >
               <ToolDetail />
             </motion.div>
-          } 
+          }
+        />
+        <Route
+          path="/compare"
+          element={
+            <motion.div
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={pageTransition}
+            >
+              <Compare />
+            </motion.div>
+          }
         />
         <Route 
           path="/subscriptions" 
@@ -172,6 +188,7 @@ function Layout() {
         <AnimatedRoutes />
       </main>
       {showLayout && <Footer />}
+      <Toast />
     </div>
   );
 }

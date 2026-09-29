@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Users, ArrowRight } from 'lucide-react';
+import { Star, Users, ArrowRight, Plus, Check } from 'lucide-react';
 import type { Tool } from '@/types';
 import { categories } from '@/mock/tools';
+import { useStore, MAX_COMPARE_TOOLS } from '@/store/useStore';
 
 interface ToolCardProps {
   tool: Tool;
@@ -11,6 +12,29 @@ interface ToolCardProps {
 
 export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
   const categoryInfo = categories.find(c => c.id === tool.category);
+  const isInCompare = useStore((state) => state.compareToolIds.includes(tool.id));
+  const addToCompare = useStore((state) => state.addToCompare);
+  const showToast = useStore((state) => state.showToast);
+  const compareCount = useStore((state) => state.compareToolIds.length);
+
+  const handleToggleCompare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isInCompare) {
+      showToast(`${tool.name} 已在对比列表中`, 'info');
+      return;
+    }
+
+    const result = addToCompare(tool.id);
+    if (result.ok) {
+      showToast(`已将 ${tool.name} 加入对比（${compareCount + 1}/${MAX_COMPARE_TOOLS}）`, 'success');
+    } else if (result.reason === 'duplicate') {
+      showToast(`${tool.name} 已在对比列表中，无需重复添加`, 'info');
+    } else {
+      showToast(`最多只能对比 ${MAX_COMPARE_TOOLS} 个工具，请先移除部分工具`, 'error');
+    }
+  };
 
   return (
     <motion.div
@@ -22,8 +46,21 @@ export default function ToolCard({ tool, index = 0 }: ToolCardProps) {
     >
       <Link
         to={`/tool/${tool.id}`}
-        className="card-hover block group h-full"
+        className="card-hover block group h-full relative"
       >
+        <button
+          onClick={handleToggleCompare}
+          title={isInCompare ? '已加入对比' : '加入对比'}
+          aria-label={isInCompare ? '已加入对比' : '加入对比'}
+          className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-lg flex items-center justify-center border transition-all duration-200 ${
+            isInCompare
+              ? 'bg-primary-500/20 border-primary-500/50 text-primary-400 opacity-100'
+              : 'bg-dark-900/80 border-gray-700 text-gray-400 opacity-0 group-hover:opacity-100 hover:bg-primary-500/20 hover:border-primary-500/50 hover:text-primary-400'
+          }`}
+        >
+          {isInCompare ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+        </button>
+
         <div className="flex items-start gap-4 mb-4">
           <div className="w-14 h-14 rounded-2xl bg-dark-900 p-2 flex-shrink-0 overflow-hidden border border-gray-700/50">
             <img

@@ -1,22 +1,23 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowLeft, 
-  Star, 
-  Users, 
-  Check, 
-  X, 
-  ChevronLeft, 
+import {
+  ArrowLeft,
+  Star,
+  Users,
+  Check,
+  X,
+  ChevronLeft,
   ChevronRight,
   Shield,
   Zap,
   Clock,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  Plus
 } from 'lucide-react';
 import { tools, categories } from '@/mock/tools';
-import { useStore } from '@/store/useStore';
+import { useStore, MAX_COMPARE_TOOLS } from '@/store/useStore';
 import ToolCard from '@/components/ToolCard';
 import type { Plan, PlanPeriod } from '@/types';
 
@@ -24,12 +25,32 @@ export default function ToolDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addSubscription } = useStore();
+  const isInCompare = useStore((state) => state.compareToolIds.includes(id ?? ''));
+  const addToCompare = useStore((state) => state.addToCompare);
+  const showToast = useStore((state) => state.showToast);
+  const compareCount = useStore((state) => state.compareToolIds.length);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [currentScreenshot, setCurrentScreenshot] = useState(0);
   const [isYearly, setIsYearly] = useState(false);
 
   const tool = tools.find(t => t.id === id);
+
+  const handleToggleCompare = () => {
+    if (!tool) return;
+    if (isInCompare) {
+      showToast(`${tool.name} 已在对比列表中`, 'info');
+      return;
+    }
+    const result = addToCompare(tool.id);
+    if (result.ok) {
+      showToast(`已将 ${tool.name} 加入对比（${compareCount + 1}/${MAX_COMPARE_TOOLS}）`, 'success');
+    } else if (result.reason === 'duplicate') {
+      showToast(`${tool.name} 已在对比列表中，无需重复添加`, 'info');
+    } else {
+      showToast(`最多只能对比 ${MAX_COMPARE_TOOLS} 个工具，请先移除部分工具`, 'error');
+    }
+  };
 
   if (!tool) {
     return (
@@ -125,6 +146,17 @@ export default function ToolDetail() {
                   <span className="text-white font-semibold">{(tool.usersCount / 1000).toFixed(0)}K+</span>
                   <span>用户</span>
                 </div>
+                <button
+                  onClick={handleToggleCompare}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                    isInCompare
+                      ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
+                      : 'border-gray-700 text-gray-300 hover:border-primary-500 hover:text-primary-400 hover:bg-primary-500/10'
+                  }`}
+                >
+                  {isInCompare ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {isInCompare ? '已加入对比' : '加入对比'}
+                </button>
               </div>
             </div>
           </div>

@@ -1,7 +1,18 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { User, UserSubscription, Tool, Category, SortOption, SubscriptionFilter, UsersRange } from '@/types';
 import { userSubscriptions } from '@/mock/subscriptions';
 import { tools } from '@/mock/tools';
+
+export const MAX_COMPARE_TOOLS = 4;
+
+export type ToastType = 'success' | 'error' | 'info';
+
+interface ToastState {
+  id: number;
+  message: string;
+  type: ToastType;
+}
 
 interface NotificationSettings {
   emailNotifications: boolean;
@@ -54,6 +65,18 @@ interface Store {
   clearAllFilters: () => void;
   getAllTags: () => string[];
   getPriceRange: () => { min: number; max: number };
+
+  // 工具对比
+  compareToolIds: string[];
+  addToCompare: (toolId: string) => { ok: boolean; reason?: 'duplicate' | 'full' };
+  removeFromCompare: (toolId: string) => void;
+  clearCompare: () => void;
+  isInCompare: (toolId: string) => boolean;
+
+  // 全局提示
+  toast: ToastState | null;
+  showToast: (message: string, type?: ToastType) => void;
+  hideToast: () => void;
 }
 
 const defaultNotificationSettings: NotificationSettings = {
@@ -64,7 +87,9 @@ const defaultNotificationSettings: NotificationSettings = {
   securityAlerts: true,
 };
 
-export const useStore = create<Store>((set, get) => ({
+export const useStore = create<Store>()(
+  persist(
+    (set, get) => ({
   user: null,
   subscriptions: userSubscriptions,
   tools: tools,
@@ -335,4 +360,47 @@ export const useStore = create<Store>((set, get) => ({
       max: Math.max(...prices),
     };
   },
-}));
+
+  // 工具对比
+  compareToolIds: [],
+
+  addToCompare: (toolId) => {
+    const { compareToolIds } = get();
+    if (compareToolIds.includes(toolId)) {
+      return { ok: false, reason: 'duplicate' };
+    }
+    if (compareToolIds.length >= MAX_COMPARE_TOOLS) {
+      return { ok: false, reason: 'full' };
+    }
+    set({ compareToolIds: [...compareToolIds, toolId] });
+    return { ok: true };
+  },
+
+  removeFromCompare: (toolId) =>
+    set((state) => ({
+      compareToolIds: state.compareToolIds.filter((id) => id !== toolId),
+    })),
+
+  clearCompare: () => set({ compareToolIds: [] }),
+
+  isInCompare: (toolId) => get().compareToolIds.includes(toolId),
+
+  // 全局提示
+  toast: null,
+
+  showToast: (message, type = 'info') => {
+    const id = Date.now();
+    set({ toast: { id, message, type } });
+    setTimeout(() => {
+      set((state) => (state.toast?.id === id ? { toast: null } : {}));
+    }, 3000);
+  },
+
+  hideToast: () => set({ toast: null }),
+    }),
+    {
+      name: 'subhub-compare',
+      partialize: (state) => ({ compareToolIds: state.compareToolIds }),
+    }
+  )
+);
